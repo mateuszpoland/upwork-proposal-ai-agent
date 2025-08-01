@@ -1,0 +1,17 @@
+fastapi
+python-dotenv
+openai>=1.14.0
+llama-index
+llama-index-embeddings-openai
+llama-index-vector-stores-supabase
+llama-index-vector-stores-postgres
+pgvector>=0.2.5
+llama-index-program-openai
+llama-index-postprocessor-cohere_rerank
+dataclasses-json
+supabase
+requests
+uvicorn
+boto3
+debugpy
+pyinstrument

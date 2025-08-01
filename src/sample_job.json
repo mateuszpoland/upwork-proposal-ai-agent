@@ -1,0 +1,47 @@
+{
+    "job_id": "f852b4f9-c355-497e-a927-700d6c2bbe0f",
+    "job_link": "https://www.upwork.com/jobs/~021942324638850382932",
+    "job_description": "### Summary
+We run a HubSpot-focused RevOps consultancy working with B2B SaaS companies and are looking for an experienced n8n expert to help us build and maintain a growing network of AI-driven operational agents.
+
+These agents are not basic workflows. They’re autonomous assistants powered by GPT (OpenAI or Claude), working across ClickUp, Slack, Airtable, and HubSpot with memory, conditional logic, and structured outputs.
+
+DO NOT MESSAGE DIRECTLY. The prompts are paramount to your application being reviewed, so please fill them out if you want to be considered.
+
+Example Agents We’ve Built (You’ll Extend/Maintain):
+-Weekly Reports Agent-  Pulls ClickUp tasks, parses custom fields (QA deliverables, approval comments), syncs data into Airtable, and drafts client-ready summaries via GPT.
+-Intake Bot Agent- Listens to Slack messages, parses client/project names, maps them to Airtable records using fuzzy logic, and auto-creates ClickUp tasks with fallback logic.
+-Task Structuring Agent- Converts vague Slack requests into a parent task + subtasks using GPT (Claude/OpenAI), including assignee logic and task descriptions.
+
+You’ll be expected to understand and extend this level of logic and implementation.
+
+Tech Stack Involved:
+-n8n (agent-style modular builds, execution control, error handling)
+-OpenAI / Claude (prompt engineering, memory context, structured output)
+-ClickUp API (task creation, field parsing, subtasks, statuses)
+-Slack API (event triggers, task intake)
+-Airtable (fallback memory + routing)
+-HubSpot (occasionally for deal and contact enrichment)
+-Webhooks & OAuth2 (for clean integration & retry logic)
+
+Expectations:
+-Strong async communication over Slack + email
+-Weekly updates via short reports or Loom
+-Availability to iterate on multiple agents over time
+-Clear, maintainable flows with smart error handling
+
+Requirements:
+-2+ years building advanced n8n workflows
+-Hands-on experience with OpenAI, Claude, or similar LLMs inside automation
+-Familiarity with ClickUp, Airtable, and Slack APIs
+-Can implement memory, fallback logic, and dynamic prompt routing
+-Writes clean, modular nodes with documentation",
+"skills_keywords": ["n8n", "Make.com", "Automation", "Business Process Automation", "Airtable", "Zapier"],
+"applicant_questions": [
+     "Describe how you would structure an n8n agent that monitors Slack messages for task intake, identifies the client/project from an Airtable list, and creates a ClickUp task. What nodes would you use, and how would you handle ambiguous or unknown clients?",
+     "We want to build agents that can retain recent task context across multiple executions (e.g., remembering a client’s last Slack thread or previous report contents). What’s your approach to implementing short-term memory in n8n?",
+     "Which of the following APIs have you worked with directly inside n8n? (Mark all that apply) ClickUp Airtable HubSpot Slack OpenAI Claude (Anthropic) For any checked, share an example of a real flow you built with it.",
+     "How do you design your n8n flows to be fault-tolerant? Describe how you’d handle timeouts, missing data, or failed API calls across a multi-step agent (e.g., pulling from ClickUp, writing to Airtable, then triggering GPT)."
+],
+"additional_agent_instruction": null
+}

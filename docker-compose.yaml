@@ -1,0 +1,15 @@
+services:
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: worker
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+      - "5678:5678"
+    volumes:
+      - ./src:/app/src:rw
+    command: ["uvicorn", "src.rag_worker.inference:app", "--host", "0.0.0.0", "--port", "8080"]
