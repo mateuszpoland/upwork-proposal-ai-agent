@@ -1,14 +1,11 @@
 #this file is required by SageMaker: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-inference-code.html
 import os
-import boto3
-import uuid
-import json
 import threading
 from fastapi import FastAPI, Request, Response, Depends, HTTPException, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
-from typing import Optional, Any, List
 from .payloads import JobApplicationRequestModel, JobAcceptedResponse
 from .pipeline import query_rag_pipeline
+from .util import timed
 
 ### debugging
 if os.getenv("DEBUGPY_ENABLED", "false").lower() == "true":
@@ -61,6 +58,7 @@ async def handle_invocation(request: Request):
 
 
 # === Long-running RAG logic ===
+@timed
 def process_job(job: JobApplicationRequestModel, job_id: str):
     try:
         result = query_rag_pipeline(job)

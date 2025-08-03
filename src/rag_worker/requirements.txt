@@ -15,3 +15,10 @@ uvicorn
 boto3
 debugpy
 pyinstrument
+arize-phoenix==10.14.0
+arize-phoenix-otel
+opentelemetry
+opentelemetry-sdk
+opentelemetry-exporter-otlp
+openinference-instrumentation-openai
+openinference-instrumentation-llama_index

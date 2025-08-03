@@ -24,3 +24,7 @@ node_modules/
 # OS specific
 .DS_Store
 aws/
+
+# Task files
+# tasks.json
+# tasks/ 

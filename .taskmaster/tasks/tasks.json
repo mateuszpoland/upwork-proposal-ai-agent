@@ -1,0 +1,802 @@
+{
+  "master": {
+    "tasks": [
+      {
+        "id": 1,
+        "title": "Fix CDK SageMaker Stack Critical Issues",
+        "description": "Resolve syntax errors and configuration issues in the existing SageMaker CDK stack to make it deployable",
+        "details": "Fix critical issues in infra/stacks/sagemaker_stack.py: 1) Add missing parentheses in super().__init__() call on line 14, 2) Fix typo 'AllTrafic' to 'AllTraffic' on line 46, 3) Change instance type from 't3.medium' to 'ml.t3.medium' on line 47 for SageMaker compatibility, 4) Add proper imports for CDK constructs, 5) Ensure proper resource naming and tagging conventions",
+        "testStrategy": "Deploy CDK stack to development environment and verify successful creation of all resources without errors. Test stack synthesis with 'cdk synth' command first.",
+        "priority": "high",
+        "dependencies": [],
+        "status": "done",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Fix Syntax Errors in SageMaker Stack Constructor",
+            "description": "Correct the syntax error in the super().__init__() call and ensure proper class initialization",
+            "dependencies": [],
+            "details": "Open infra/stacks/sagemaker_stack.py and locate line 14. Add missing parentheses to the super().__init__() call. Ensure the call follows proper Python syntax: super().__init__(scope, construct_id, **kwargs). Verify the class inherits from the correct CDK Stack base class.",
+            "status": "done",
+            "testStrategy": "Run Python syntax checker and attempt to import the module to verify no syntax errors remain"
+          },
+          {
+            "id": 2,
+            "title": "Add Missing CDK Construct Imports",
+            "description": "Import all required CDK constructs and AWS service modules needed for the SageMaker stack",
+            "dependencies": [],
+            "details": "Review the stack code and identify all CDK constructs being used. Add proper import statements at the top of the file for aws-cdk-lib modules including aws_sagemaker, aws_iam, aws_ec2, and any other required services. Ensure imports follow CDK v2 syntax using aws-cdk-lib package structure.",
+            "status": "done",
+            "testStrategy": "Verify imports resolve correctly by running 'python -c \"from infra.stacks.sagemaker_stack import *\"'"
+          },
+          {
+            "id": 3,
+            "title": "Fix SageMaker Configuration Errors",
+            "description": "Correct the typo in traffic configuration and update instance type for SageMaker compatibility",
+            "dependencies": [],
+            "details": "Locate line 46 and change 'AllTrafic' to 'AllTraffic' in the endpoint configuration. On line 47, change instance type from 't3.medium' to 'ml.t3.medium' to ensure SageMaker compatibility. Review all SageMaker-specific configurations to ensure they use proper SageMaker instance types and parameter names.",
+            "status": "done",
+            "testStrategy": "Run 'cdk synth' command to verify CloudFormation template generates without errors and contains correct SageMaker resource configurations"
+          },
+          {
+            "id": 4,
+            "title": "Implement Resource Naming and Tagging Conventions",
+            "description": "Apply consistent naming conventions and add proper tags to all CDK resources in the stack",
+            "dependencies": [],
+            "details": "Review all resource definitions and apply consistent naming using project prefix and environment suffix. Add standard tags including Environment, Project, Owner, and CostCenter to all resources. Use CDK Tags.of() method to apply tags at stack level and resource-specific tags where needed. Ensure resource names follow AWS naming conventions and are unique.",
+            "status": "done",
+            "testStrategy": "Verify generated CloudFormation template contains proper resource names and tags using 'cdk synth' and inspect the output"
+          },
+          {
+            "id": 5,
+            "title": "Validate Stack Deployment Readiness",
+            "description": "Perform final validation of the corrected CDK stack and ensure it's ready for deployment",
+            "dependencies": [],
+            "details": "Run comprehensive validation including 'cdk synth' to generate CloudFormation template, 'cdk diff' to check changes, and 'cdk doctor' to verify CDK environment setup. Review the generated template for any remaining issues. Ensure all IAM roles and policies are properly defined. Verify stack can be deployed to development environment without errors.",
+            "status": "done",
+            "testStrategy": "Deploy stack to development environment using 'cdk deploy' and verify all SageMaker resources are created successfully without errors. Confirm stack can be destroyed and redeployed cleanly."
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "Create ECR Repository and Container Build Pipeline",
+        "description": "Set up ECR repository and implement Docker image build/push process for the RAG worker application",
+        "details": "1) Create ECR repository using CDK or AWS CLI, 2) Build Docker image from existing Dockerfile in src/rag_worker/, 3) Tag image appropriately with version/latest tags, 4) Push image to ECR repository, 5) Create build script for automated image updates, 6) Update CDK stack to reference ECR image URI instead of hardcoded values",
+        "testStrategy": "Verify ECR repository creation, successful image push, and ability to pull image. Test local Docker container runs correctly with the pushed image.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create and configure ECR repository",
+            "description": "Set up an Amazon ECR repository using CDK to store Docker images for the RAG worker application",
+            "dependencies": [],
+            "details": "Create ECR repository with CDK in the infrastructure stack. Configure repository policies for proper access control. Set up lifecycle rules to manage image retention. Add appropriate tags for resource management. Document repository ARN and URI for reference in other components.",
+            "status": "done",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Implement Docker image build and tagging process",
+            "description": "Create a process to build and tag Docker images from the existing Dockerfile in src/rag_worker/",
+            "dependencies": [],
+            "details": "Review existing Dockerfile in src/rag_worker/ for completeness. Create build script that handles Docker build process. Implement tagging strategy with version numbers and 'latest' tag. Test Docker build locally to ensure image works correctly. Document build parameters and environment variables needed.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Automate image push with versioning",
+            "description": "Create automation scripts for pushing Docker images to ECR with proper versioning",
+            "dependencies": [],
+            "details": "Develop script to automate AWS ECR authentication. Implement versioning strategy (semantic versioning recommended). Create push script that handles tagging and pushing to ECR. Add validation to ensure images are successfully pushed. Implement logging for build and push operations for troubleshooting.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Integrate ECR image URIs with CDK stack",
+            "description": "Update CDK stack to reference ECR image URIs instead of hardcoded values",
+            "dependencies": [],
+            "details": "Modify CDK stack to dynamically reference ECR repository URI. Update container definitions to use the ECR image URI. Implement parameter passing for image tags/versions. Test CDK synthesis and deployment with ECR references. Document the integration points between ECR and other AWS services in the stack.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Configure AWS Secrets Manager Integration",
+        "description": "Set up AWS Secrets Manager to store all required environment variables and integrate with SageMaker endpoint",
+        "details": "Create secrets in AWS Secrets Manager for: OPENAI_API_KEY, COHERE_API_KEY, SUPABASE_URL, SUPABASE_KEY, WEBHOOK_URL, BASIC_AUTH_USER, BASIC_AUTH_PASS, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL. Update CDK stack to grant SageMaker execution role permissions to read secrets. Modify inference.py and pipeline.py to use boto3 secrets manager client instead of os.getenv() calls. Implement secret caching for performance.",
+        "testStrategy": "Test secret retrieval in development environment. Verify SageMaker endpoint can access all required secrets and application starts without environment variable errors.",
+        "priority": "high",
+        "dependencies": [
+          1
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create AWS Secrets Manager Secrets",
+            "description": "Create all required secrets in AWS Secrets Manager for the application environment variables",
+            "dependencies": [],
+            "details": "Create secrets in AWS Secrets Manager for: OPENAI_API_KEY, COHERE_API_KEY, SUPABASE_URL, SUPABASE_KEY, WEBHOOK_URL, BASIC_AUTH_USER, BASIC_AUTH_PASS, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL. Organize secrets with proper naming convention and tags for environment identification.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Configure IAM Permissions for Secrets Access",
+            "description": "Update CDK stack to grant SageMaker execution role permissions to read secrets from AWS Secrets Manager",
+            "dependencies": [
+              "3.1"
+            ],
+            "details": "Modify CDK infrastructure code to add IAM policies allowing SageMaker execution role to read specific secrets. Configure least-privilege access with resource-specific ARNs. Update security groups and VPC endpoints if needed for Secrets Manager access.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Modify Code for Secrets Retrieval",
+            "description": "Update inference.py and pipeline.py to use boto3 secrets manager client instead of os.getenv() calls",
+            "dependencies": [
+              "3.2"
+            ],
+            "details": "Replace all os.getenv() calls with boto3 secrets manager client calls in inference.py and pipeline.py. Implement proper error handling for secret retrieval failures. Add fallback mechanisms and logging for debugging secret access issues.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Secret Caching for Performance Optimization",
+            "description": "Add caching mechanism for retrieved secrets to improve performance and reduce API calls to Secrets Manager",
+            "dependencies": [
+              "3.3"
+            ],
+            "details": "Implement in-memory caching for secrets with configurable TTL. Add cache invalidation logic and refresh mechanisms. Optimize for cold start performance in SageMaker environment. Include cache hit/miss metrics for monitoring.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "Enhance CDK Stack with Security and Monitoring",
+        "description": "Add VPC configuration, security groups, IAM roles, and CloudWatch logging to the SageMaker CDK stack",
+        "details": "1) Add VPC and subnet configuration for SageMaker endpoint, 2) Create security groups allowing HTTPS traffic and Supabase connectivity, 3) Configure IAM execution role with minimal required permissions for SageMaker, Secrets Manager, and CloudWatch, 4) Add CloudWatch log group for SageMaker endpoint logs, 5) Configure CloudWatch metrics and alarms for endpoint health, 6) Add resource tags for cost tracking and governance",
+        "testStrategy": "Deploy stack and verify all security configurations. Test network connectivity to Supabase from SageMaker endpoint. Confirm CloudWatch logs are being generated and metrics are available.",
+        "priority": "medium",
+        "dependencies": [
+          1,
+          3
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "VPC and Networking Setup",
+            "description": "Configure VPC with public/private subnets, internet gateway, NAT gateway, and route tables for SageMaker endpoint deployment",
+            "dependencies": [],
+            "details": "Create VPC with CIDR block, configure public and private subnets across multiple AZs, set up internet gateway for public subnets, configure NAT gateway for private subnet internet access, create route tables and associate with subnets, enable VPC flow logs for monitoring",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Security Groups Configuration",
+            "description": "Create and configure security groups for SageMaker endpoint with proper ingress/egress rules",
+            "dependencies": [
+              "4.1"
+            ],
+            "details": "Create security group for SageMaker endpoint allowing HTTPS (443) inbound traffic, configure egress rules for Supabase connectivity (443), OpenAI API access (443), and internal AWS services, implement least privilege access principles, add security group for ALB if needed",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "IAM Roles and Policies Creation",
+            "description": "Create IAM execution role for SageMaker with minimal required permissions following principle of least privilege",
+            "dependencies": [],
+            "details": "Create SageMaker execution role with permissions for ECR image access, CloudWatch logs writing, Secrets Manager read access for application secrets, S3 access for model artifacts, VPC network interface management, implement resource-based policies where applicable",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "CloudWatch Logging Setup",
+            "description": "Configure CloudWatch log groups and logging for SageMaker endpoint with proper retention policies",
+            "dependencies": [
+              "4.3"
+            ],
+            "details": "Create CloudWatch log group for SageMaker endpoint logs, configure log retention period (30 days for dev, 90 days for prod), set up log streams for different log levels, configure structured logging format, enable log insights for querying",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "CloudWatch Metrics and Alarms Configuration",
+            "description": "Set up CloudWatch metrics collection and configure alarms for endpoint health monitoring",
+            "dependencies": [
+              "4.4"
+            ],
+            "details": "Configure custom metrics for endpoint latency, error rates, and throughput, create CloudWatch alarms for high error rates (>5%), latency threshold (>120s), endpoint availability, set up SNS topics for alarm notifications, configure dashboard for monitoring visualization",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Resource Tagging Implementation",
+            "description": "Implement comprehensive resource tagging strategy for cost tracking, governance, and resource management",
+            "dependencies": [],
+            "details": "Define tagging strategy with required tags: Environment, Project, Owner, CostCenter, create tag policies for consistent application, implement tags across all resources (VPC, subnets, security groups, IAM roles, SageMaker endpoint, CloudWatch resources), set up cost allocation tags for billing",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Configure VPC and Subnet Infrastructure for SageMaker",
+            "description": "Set up VPC with public and private subnets, internet gateway, and NAT gateway to provide secure network isolation for SageMaker endpoint",
+            "dependencies": [],
+            "details": "Create VPC with CIDR block (e.g., 10.0.0.0/16), add public subnet for NAT gateway (10.0.1.0/24) and private subnet for SageMaker endpoint (10.0.2.0/24). Configure internet gateway for public subnet and NAT gateway for private subnet outbound access. Add route tables with appropriate routes for internet access from private subnet through NAT gateway.",
+            "status": "pending",
+            "testStrategy": "Verify VPC creation, subnet configuration, and routing tables. Test connectivity from private subnet to internet through NAT gateway."
+          },
+          {
+            "id": 8,
+            "title": "Create Security Groups for Network Access Control",
+            "description": "Configure security groups to allow HTTPS traffic and secure connectivity to Supabase while restricting unnecessary access",
+            "dependencies": [
+              "4.7"
+            ],
+            "details": "Create security group for SageMaker endpoint allowing outbound HTTPS (port 443) to 0.0.0.0/0 for OpenAI/Cohere APIs, outbound PostgreSQL (port 5432) to Supabase IP ranges, and inbound HTTPS (port 443) from application sources. Create separate security group for NAT gateway allowing HTTP/HTTPS outbound traffic. Apply principle of least privilege for all rules.",
+            "status": "pending",
+            "testStrategy": "Validate security group rules allow required traffic and block unauthorized access. Test connectivity to external services from SageMaker subnet."
+          },
+          {
+            "id": 9,
+            "title": "Configure IAM Execution Role with Minimal Permissions",
+            "description": "Create IAM role for SageMaker with precisely scoped permissions for SageMaker operations, Secrets Manager access, and CloudWatch logging",
+            "dependencies": [],
+            "details": "Create IAM role with trust policy for SageMaker service. Attach custom policy allowing sagemaker:InvokeEndpoint, secretsmanager:GetSecretValue for specific secret ARNs, logs:CreateLogGroup, logs:CreateLogStream, logs:PutLogEvents for CloudWatch logging, and ecr:GetAuthorizationToken, ecr:BatchCheckLayerAvailability, ecr:GetDownloadUrlForLayer, ecr:BatchGetImage for ECR access. Use resource-specific ARNs where possible.",
+            "status": "pending",
+            "testStrategy": "Verify role can be assumed by SageMaker service and has only required permissions. Test access to secrets and CloudWatch logging functionality."
+          },
+          {
+            "id": 10,
+            "title": "Set Up CloudWatch Log Group for SageMaker Endpoint",
+            "description": "Create dedicated CloudWatch log group with appropriate retention policy for SageMaker endpoint logs and configure log streaming",
+            "dependencies": [
+              "4.9"
+            ],
+            "details": "Create CloudWatch log group with name '/aws/sagemaker/Endpoints/{endpoint-name}' and set retention period to 30 days for cost optimization. Configure log group with appropriate tags for governance. Set up log streams for container logs and configure SageMaker endpoint to send logs to this group. Enable log insights for advanced querying capabilities.",
+            "status": "pending",
+            "testStrategy": "Verify log group creation and proper log streaming from SageMaker endpoint. Test log retention policy and search functionality."
+          },
+          {
+            "id": 11,
+            "title": "Configure CloudWatch Metrics and Health Monitoring Alarms",
+            "description": "Set up CloudWatch metrics collection and create alarms for endpoint health, latency, and error rates with appropriate thresholds",
+            "dependencies": [
+              "4.10"
+            ],
+            "details": "Configure CloudWatch to collect SageMaker endpoint metrics including Invocations, InvocationErrors, ModelLatency, and OverheadLatency. Create alarms for high error rate (>5% over 5 minutes), high latency (>30 seconds), and endpoint availability. Set up SNS topic for alarm notifications. Configure custom metrics for business logic errors and response times. Add dashboard for visual monitoring.",
+            "status": "pending",
+            "testStrategy": "Verify metrics are being collected and alarms trigger correctly. Test alarm notifications and dashboard functionality with simulated load."
+          },
+          {
+            "id": 12,
+            "title": "Implement Resource Tagging Strategy for Cost Tracking and Governance",
+            "description": "Apply comprehensive tagging strategy across all resources for cost allocation, environment identification, and compliance tracking",
+            "dependencies": [
+              "4.7",
+              "4.8",
+              "4.9",
+              "4.10",
+              "4.11"
+            ],
+            "details": "Define and apply consistent tags across all resources: Environment (dev/staging/prod), Project (rag-worker), Owner (team/individual), CostCenter (billing code), CreatedBy (automation/manual), and Purpose (ml-inference). Use CDK aspects to automatically apply tags to all constructs. Implement tag-based cost allocation reports and governance policies. Add lifecycle tags for automated resource cleanup.",
+            "status": "pending",
+            "testStrategy": "Verify all resources have required tags applied correctly. Test cost allocation reports and governance policy enforcement. Validate tag consistency across the entire stack."
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Deploy SageMaker Model and Endpoint",
+        "description": "Deploy the containerized RAG worker to SageMaker as a real-time inference endpoint",
+        "details": "1) Create SageMaker model using ECR image URI, 2) Configure endpoint configuration with appropriate instance type (ml.t3.medium or ml.m5.large), 3) Deploy SageMaker endpoint with auto-scaling configuration, 4) Configure endpoint to use secrets from AWS Secrets Manager, 5) Set up proper health checks and endpoint monitoring, 6) Test endpoint accessibility and basic functionality",
+        "testStrategy": "Send test requests to /invocations endpoint using sample_job.json. Verify endpoint returns successful responses and can connect to external services (Supabase, OpenAI, Cohere).",
+        "priority": "high",
+        "dependencies": [
+          2,
+          4
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Create SageMaker Model Configuration",
+            "description": "Create and configure the SageMaker model using the ECR image URI with proper execution role and environment settings",
+            "dependencies": [],
+            "details": "Create SageMaker model resource using the ECR image URI from task 2. Configure model with appropriate execution role that has permissions to access ECR, Secrets Manager, and CloudWatch. Set up model environment variables and container definitions. Validate model creation through AWS console or CLI.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Configure SageMaker Endpoint Configuration",
+            "description": "Set up endpoint configuration with appropriate instance type and auto-scaling settings",
+            "dependencies": [
+              "5.1"
+            ],
+            "details": "Create SageMaker endpoint configuration specifying instance type (ml.t3.medium or ml.m5.large), initial instance count, and auto-scaling policies. Configure data capture settings for monitoring. Set up proper resource limits and timeout configurations. Validate configuration parameters meet SageMaker requirements.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Execute SageMaker Endpoint Deployment",
+            "description": "Deploy the SageMaker endpoint using the configured model and endpoint configuration",
+            "dependencies": [
+              "5.2"
+            ],
+            "details": "Deploy SageMaker endpoint using the model and endpoint configuration. Monitor deployment progress and handle any deployment failures. Configure endpoint tags and naming conventions. Set up CloudWatch alarms for endpoint monitoring. Verify endpoint reaches 'InService' status successfully.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Integrate AWS Secrets Manager Access",
+            "description": "Configure the deployed endpoint to securely access secrets from AWS Secrets Manager",
+            "dependencies": [
+              "5.3"
+            ],
+            "details": "Ensure SageMaker execution role has proper IAM permissions to read from Secrets Manager. Validate that the containerized application can retrieve all required secrets (OPENAI_API_KEY, COHERE_API_KEY, SUPABASE_URL, etc.). Test secret caching functionality and error handling for secret retrieval failures.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Setup Health Checks and Monitoring",
+            "description": "Configure comprehensive health checks and monitoring for the SageMaker endpoint",
+            "dependencies": [
+              "5.4"
+            ],
+            "details": "Set up CloudWatch metrics and alarms for endpoint health monitoring. Configure custom health check endpoints within the container. Set up logging for inference requests and responses. Create dashboards for monitoring endpoint performance, latency, and error rates. Test health check responsiveness and alert mechanisms.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Test Endpoint Functionality",
+            "description": "Perform comprehensive testing of the deployed endpoint functionality and external service connectivity",
+            "dependencies": [
+              "5.5"
+            ],
+            "details": "Send test requests to /invocations endpoint using sample_job.json payload. Verify endpoint returns successful responses with expected format. Test connectivity to external services (Supabase, OpenAI, Cohere). Validate error handling for malformed requests and service failures. Perform load testing to ensure endpoint can handle expected traffic volumes.",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Create Deployment Scripts and Environment Configuration",
+        "description": "Develop automated deployment scripts and environment-specific configurations for development and production",
+        "details": "1) Create deployment script (deploy.sh) that handles CDK deployment, image building, and pushing, 2) Create environment-specific parameter files (dev.json, prod.json), 3) Add rollback scripts for failed deployments, 4) Create environment validation scripts to check all dependencies, 5) Document deployment process and troubleshooting guide, 6) Add pre-deployment checks for secrets and permissions",
+        "testStrategy": "Test deployment scripts in clean AWS account. Verify successful deployment and rollback procedures. Validate environment-specific configurations work correctly.",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": []
+      },
+      {
+        "id": 7,
+        "title": "Implement Comprehensive Testing Suite",
+        "description": "Create automated tests for the deployed SageMaker endpoint including integration and load testing",
+        "details": "1) Create integration tests using sample_job.json to test complete workflow, 2) Implement load testing to verify <120s latency requirement, 3) Add health check tests for endpoint availability, 4) Create tests for webhook callback functionality, 5) Implement monitoring tests for CloudWatch metrics, 6) Add authentication tests for Basic Auth, 7) Create test data sets for various job types and edge cases",
+        "testStrategy": "Run full test suite against deployed endpoint. Verify all tests pass and latency requirements are met. Test failure scenarios and error handling.",
+        "priority": "medium",
+        "dependencies": [
+          5
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Integration Testing Implementation",
+            "description": "Create comprehensive integration tests using sample_job.json to test the complete workflow from request to response",
+            "dependencies": [],
+            "details": "Develop integration test suite that validates end-to-end functionality including: request parsing, RAG pipeline execution, external service connectivity (Supabase, OpenAI, Cohere), response formatting, and error handling scenarios. Use sample_job.json as test input and verify complete workflow execution.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Load Testing Implementation",
+            "description": "Implement load testing framework to verify the <120s latency requirement and endpoint performance under stress",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "Create load testing scripts using tools like Apache JMeter or Locust to simulate concurrent requests. Test various load scenarios including burst traffic, sustained load, and gradual ramp-up. Measure response times, throughput, and resource utilization to ensure latency requirements are met.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Health Check Testing",
+            "description": "Develop automated health check tests for endpoint availability and service status monitoring",
+            "dependencies": [],
+            "details": "Create health check test suite that validates endpoint availability, service readiness, and dependency connectivity. Include tests for /ping endpoint, service startup validation, external service connectivity checks, and graceful degradation scenarios.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Webhook Testing Implementation",
+            "description": "Create comprehensive tests for webhook callback functionality and delivery mechanisms",
+            "dependencies": [
+              "7.1"
+            ],
+            "details": "Develop webhook testing framework that validates callback delivery, payload formatting, retry mechanisms, and failure handling. Include tests for successful callbacks, timeout scenarios, authentication validation, and webhook endpoint availability.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Monitoring Validation Testing",
+            "description": "Implement tests to validate CloudWatch metrics, logging, and monitoring configurations",
+            "dependencies": [
+              "7.3"
+            ],
+            "details": "Create monitoring validation tests that verify CloudWatch metrics collection, log generation, alarm functionality, and dashboard accuracy. Test metric thresholds, log parsing, alert notifications, and monitoring data integrity.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Authentication Testing Suite",
+            "description": "Develop comprehensive authentication tests for Basic Auth and security validation",
+            "dependencies": [],
+            "details": "Create authentication test suite that validates Basic Auth implementation, credential validation, unauthorized access prevention, and security headers. Include tests for valid credentials, invalid credentials, missing authentication, and security bypass attempts.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Test Data Preparation",
+            "description": "Create comprehensive test datasets for various job types, edge cases, and validation scenarios",
+            "dependencies": [],
+            "details": "Develop test data sets including valid job configurations, edge case scenarios, malformed inputs, boundary conditions, and stress test data. Create data for different job types, various payload sizes, and error condition testing to ensure comprehensive test coverage.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Create Integration Test Framework and Sample Data",
+            "description": "Set up the testing framework structure and create comprehensive test data sets for various job types and edge cases",
+            "dependencies": [],
+            "details": "Create a pytest-based testing framework with fixtures for SageMaker endpoint testing. Generate test data sets including valid sample_job.json files for different document types (PDF, DOCX, TXT), edge cases (empty files, large files, corrupted files), and various query types. Set up test configuration files for different environments (dev, staging, prod) with endpoint URLs and authentication credentials.",
+            "status": "pending",
+            "testStrategy": "Verify test framework can be imported and configured. Validate all test data files are properly formatted and cover expected use cases."
+          },
+          {
+            "id": 9,
+            "title": "Implement Health Check and Endpoint Availability Tests",
+            "description": "Create automated tests to verify SageMaker endpoint health and availability",
+            "dependencies": [],
+            "details": "Implement health check tests that ping the SageMaker endpoint status, verify it returns expected HTTP status codes, and check response times. Add tests for endpoint scaling behavior and cold start scenarios. Include tests for endpoint metadata retrieval and model version verification. Create monitoring for endpoint state transitions (InService, OutOfService, Creating, Updating).",
+            "status": "pending",
+            "testStrategy": "Run health checks against live endpoint. Verify tests can detect endpoint failures and recovery. Test with endpoint in different states."
+          },
+          {
+            "id": 10,
+            "title": "Develop Authentication and Security Tests",
+            "description": "Create comprehensive tests for Basic Auth authentication and security configurations",
+            "dependencies": [],
+            "details": "Implement tests for Basic Auth header validation, including valid credentials, invalid credentials, missing headers, and malformed authentication data. Add tests for HTTPS enforcement and SSL certificate validation. Create tests for IAM role permissions and security group configurations. Include tests for rate limiting and request validation.",
+            "status": "pending",
+            "testStrategy": "Test with valid and invalid credentials. Verify security configurations block unauthorized access. Test edge cases like expired tokens or malformed headers."
+          },
+          {
+            "id": 11,
+            "title": "Create End-to-End Integration Tests",
+            "description": "Implement complete workflow tests using sample_job.json to test the entire RAG pipeline",
+            "dependencies": [],
+            "details": "Create integration tests that submit complete jobs using sample_job.json, track job processing through all stages, and verify final outputs. Test document upload, processing, embedding generation, and query responses. Include tests for different document formats and sizes. Verify proper error handling for invalid inputs and processing failures. Test the complete workflow from job submission to result retrieval.",
+            "status": "pending",
+            "testStrategy": "Submit real jobs and verify complete processing pipeline. Test with various document types and query patterns. Validate output quality and format."
+          },
+          {
+            "id": 12,
+            "title": "Implement Load Testing and Performance Validation",
+            "description": "Create load tests to verify the <120s latency requirement and endpoint performance under stress",
+            "dependencies": [],
+            "details": "Implement load testing using tools like Locust or pytest-benchmark to simulate concurrent requests. Create tests that gradually increase load to find performance limits. Verify latency requirements are met under various load conditions. Test with different job sizes and complexity levels. Include tests for auto-scaling behavior and resource utilization monitoring. Create performance regression tests.",
+            "status": "pending",
+            "testStrategy": "Run load tests with increasing concurrency levels. Verify latency stays under 120s requirement. Monitor resource utilization and scaling behavior during tests."
+          },
+          {
+            "id": 13,
+            "title": "Develop Webhook Callback and Notification Tests",
+            "description": "Create tests for webhook callback functionality and job status notifications",
+            "dependencies": [],
+            "details": "Implement tests for webhook callback delivery, including successful callbacks, retry logic for failed callbacks, and callback payload validation. Create mock webhook endpoints for testing. Test callback authentication and security. Verify job status updates are properly communicated through webhooks. Include tests for callback timeouts and error handling.",
+            "status": "pending",
+            "testStrategy": "Set up mock webhook servers to receive callbacks. Verify callback delivery and retry mechanisms. Test with various callback scenarios including failures and timeouts."
+          },
+          {
+            "id": 14,
+            "title": "Implement CloudWatch Monitoring and Metrics Tests",
+            "description": "Create tests for CloudWatch metrics collection, alarms, and monitoring functionality",
+            "dependencies": [],
+            "details": "Implement tests that verify CloudWatch metrics are being generated correctly, including custom metrics for job processing times, success rates, and error counts. Test CloudWatch alarms trigger appropriately for various failure scenarios. Create tests for log aggregation and analysis. Verify dashboard functionality and metric visualization. Include tests for metric retention and historical data access.",
+            "status": "pending",
+            "testStrategy": "Generate test load and verify metrics appear in CloudWatch. Test alarm triggering with simulated failures. Validate log entries are properly formatted and searchable."
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Configure Production Environment and Secrets",
+        "description": "Set up production-specific configurations, secrets, and security hardening for the SageMaker deployment",
+        "details": "1) Deploy production secrets to AWS Secrets Manager with proper access controls, 2) Configure production-grade instance types and auto-scaling, 3) Set up production VPC with private subnets and NAT gateway, 4) Configure production CloudWatch alarms and SNS notifications, 5) Implement backup and disaster recovery procedures, 6) Add production-specific security groups and NACLs, 7) Configure cost monitoring and budgets",
+        "testStrategy": "Deploy to production environment and run full integration tests. Verify security configurations and monitoring. Test disaster recovery procedures.",
+        "priority": "high",
+        "dependencies": [
+          6,
+          7
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "Deploy Production Secrets to AWS Secrets Manager",
+            "description": "Set up production-grade secrets management with proper access controls and encryption",
+            "dependencies": [],
+            "details": "Deploy all production secrets (OPENAI_API_KEY, COHERE_API_KEY, SUPABASE_URL, SUPABASE_KEY, WEBHOOK_URL, BASIC_AUTH_USER, BASIC_AUTH_PASS, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL) to AWS Secrets Manager with KMS encryption. Configure IAM policies for least-privilege access. Set up secret rotation policies where applicable. Implement secret versioning and audit logging.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Configure Production Instance Scaling",
+            "description": "Set up production-grade instance types and auto-scaling configuration for SageMaker endpoints",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Configure production instance types (ml.m5.large or ml.m5.xlarge) for optimal performance. Set up auto-scaling policies based on CPU utilization and request count. Configure minimum and maximum instance counts. Implement warm-up periods and scale-down policies. Set up endpoint data capture for monitoring.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Setup Production Networking Infrastructure",
+            "description": "Configure production VPC with private subnets, NAT gateway, and security groups",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Create production VPC with private subnets across multiple AZs. Deploy NAT gateway for outbound internet access. Configure security groups with minimal required ports (443 for HTTPS). Set up NACLs for additional network security. Configure VPC endpoints for AWS services to avoid internet routing.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Implement Monitoring and Alerting",
+            "description": "Set up comprehensive CloudWatch monitoring, alarms, and SNS notifications",
+            "dependencies": [
+              "8.2",
+              "8.3"
+            ],
+            "details": "Configure CloudWatch alarms for endpoint health, latency, error rates, and instance utilization. Set up SNS topics for critical alerts. Create custom metrics for business logic monitoring. Configure log aggregation and retention policies. Set up dashboards for operational visibility. Implement health check endpoints.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Configure Disaster Recovery Procedures",
+            "description": "Implement backup strategies and disaster recovery procedures for production resilience",
+            "dependencies": [
+              "8.3"
+            ],
+            "details": "Set up automated backups for critical configurations and data. Create cross-region replication strategies. Document disaster recovery procedures and RTO/RPO targets. Implement infrastructure as code for rapid environment recreation. Set up monitoring for backup success/failure. Create runbooks for disaster scenarios.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 6,
+            "title": "Apply Security Hardening Measures",
+            "description": "Implement production-specific security controls and compliance measures",
+            "dependencies": [
+              "8.3",
+              "8.4"
+            ],
+            "details": "Enable AWS CloudTrail for audit logging. Configure AWS Config for compliance monitoring. Implement least-privilege IAM policies. Enable VPC Flow Logs. Set up AWS GuardDuty for threat detection. Configure encryption at rest and in transit. Implement API authentication and rate limiting. Conduct security scanning and vulnerability assessment.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 7,
+            "title": "Setup Cost Management and Optimization",
+            "description": "Configure cost monitoring, budgets, and optimization strategies for production environment",
+            "dependencies": [
+              "8.2",
+              "8.4"
+            ],
+            "details": "Set up AWS Cost Explorer and detailed billing. Configure budget alerts for cost thresholds. Implement resource tagging strategy for cost allocation. Set up automated cost optimization recommendations. Configure scheduled scaling for predictable workloads. Implement cost anomaly detection. Create cost reporting dashboards and regular reviews.",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 8,
+            "title": "Deploy Production Secrets to AWS Secrets Manager",
+            "description": "Create and configure production secrets in AWS Secrets Manager with proper access controls and encryption",
+            "dependencies": [],
+            "details": "Create secrets in AWS Secrets Manager for all production environment variables: OPENAI_API_KEY, COHERE_API_KEY, SUPABASE_URL, SUPABASE_KEY, WEBHOOK_URL, BASIC_AUTH_USER, BASIC_AUTH_PASS, OPENAI_MODEL, OPENAI_EMBEDDING_MODEL. Configure KMS encryption with customer-managed keys. Set up IAM policies with least-privilege access for SageMaker execution role. Enable secret rotation where applicable. Configure resource-based policies to restrict access to specific AWS accounts and roles.",
+            "status": "pending",
+            "testStrategy": "Verify secrets are created with proper encryption. Test IAM role can access secrets. Validate secret rotation functionality."
+          },
+          {
+            "id": 9,
+            "title": "Configure Production-Grade Instance Types and Auto-Scaling",
+            "description": "Set up production SageMaker endpoint with appropriate instance types and auto-scaling policies",
+            "dependencies": [
+              "8.1"
+            ],
+            "details": "Configure SageMaker endpoint with production instance types (ml.m5.xlarge or ml.c5.2xlarge) based on load requirements. Implement auto-scaling policies with target tracking scaling based on InvocationsPerInstance metric. Set minimum capacity to 2 instances for high availability and maximum capacity based on budget constraints. Configure scale-out cooldown periods and scale-in protection. Set up Application Auto Scaling policies with CloudWatch alarms for CPU and memory utilization.",
+            "status": "pending",
+            "testStrategy": "Test auto-scaling triggers under load. Verify minimum instance count maintained. Validate scaling policies respond appropriately to traffic changes."
+          },
+          {
+            "id": 10,
+            "title": "Set Up Production VPC with Private Subnets and NAT Gateway",
+            "description": "Create production VPC infrastructure with private subnets, NAT gateway, and proper network isolation",
+            "dependencies": [],
+            "details": "Create production VPC with CIDR block (e.g., 10.0.0.0/16). Set up private subnets across multiple AZs for SageMaker endpoints. Deploy NAT Gateway in public subnet for outbound internet access. Configure route tables for private subnets to route through NAT Gateway. Set up VPC endpoints for AWS services (S3, ECR, Secrets Manager, CloudWatch) to avoid internet routing. Configure DNS resolution and hostnames. Implement VPC Flow Logs for network monitoring.",
+            "status": "pending",
+            "testStrategy": "Verify SageMaker endpoints can access internet through NAT Gateway. Test VPC endpoints connectivity. Validate network isolation and routing."
+          },
+          {
+            "id": 11,
+            "title": "Configure Production CloudWatch Alarms and SNS Notifications",
+            "description": "Set up comprehensive monitoring with CloudWatch alarms and SNS notifications for production alerts",
+            "dependencies": [
+              "8.2"
+            ],
+            "details": "Create CloudWatch alarms for SageMaker endpoint metrics: ModelLatency (>120s), Invocation4XXErrors, Invocation5XXErrors, CPUUtilization (>80%), MemoryUtilization (>85%). Set up SNS topics for critical, warning, and info alerts. Configure email and SMS notifications for on-call team. Create custom metrics for business logic errors and webhook failures. Set up CloudWatch dashboards for real-time monitoring. Configure log aggregation and retention policies for SageMaker endpoint logs.",
+            "status": "pending",
+            "testStrategy": "Test alarm triggers by simulating high latency and error conditions. Verify SNS notifications are delivered. Validate dashboard displays correct metrics."
+          },
+          {
+            "id": 12,
+            "title": "Implement Backup and Disaster Recovery Procedures",
+            "description": "Set up backup strategies and disaster recovery procedures for production environment",
+            "dependencies": [
+              "8.1",
+              "8.3"
+            ],
+            "details": "Implement automated backups for Supabase database with point-in-time recovery. Create cross-region replication for critical secrets in AWS Secrets Manager. Set up automated AMI backups for any EC2 instances. Document and automate disaster recovery procedures including endpoint recreation, secret restoration, and data recovery. Create runbooks for common failure scenarios. Set up cross-region deployment capabilities for disaster recovery. Implement infrastructure as code backup with CDK stack versioning.",
+            "status": "pending",
+            "testStrategy": "Test backup restoration procedures. Validate cross-region failover capabilities. Verify disaster recovery runbooks are accurate and executable."
+          },
+          {
+            "id": 13,
+            "title": "Add Production-Specific Security Groups and NACLs",
+            "description": "Configure network security with production-grade security groups and network ACLs",
+            "dependencies": [
+              "8.3"
+            ],
+            "details": "Create restrictive security groups for SageMaker endpoints allowing only necessary inbound traffic (HTTPS on port 443 from ALB/API Gateway). Configure outbound rules for specific destinations (Supabase, OpenAI, Cohere APIs). Implement Network ACLs as additional layer of security with explicit allow/deny rules. Set up security group rules for VPC endpoints. Configure WAF rules for API Gateway if used. Implement IP whitelisting for administrative access. Enable VPC Flow Logs analysis for security monitoring.",
+            "status": "pending",
+            "testStrategy": "Test network connectivity with restrictive rules. Verify only authorized traffic is allowed. Validate security group and NACL rules block unauthorized access."
+          },
+          {
+            "id": 14,
+            "title": "Configure Cost Monitoring and Budgets",
+            "description": "Set up cost monitoring, budgets, and cost optimization for production environment",
+            "dependencies": [
+              "8.2",
+              "8.4"
+            ],
+            "details": "Create AWS Budgets for monthly spending limits with alerts at 50%, 80%, and 100% thresholds. Set up Cost Explorer reports for SageMaker, ECR, Secrets Manager, and VPC costs. Configure billing alerts via SNS. Implement cost allocation tags for all resources. Set up automated cost optimization recommendations. Create dashboards for cost tracking by service and environment. Configure Reserved Instance recommendations for predictable workloads. Set up Trusted Advisor cost optimization checks.",
+            "status": "pending",
+            "testStrategy": "Verify budget alerts trigger at specified thresholds. Test cost allocation tag reporting. Validate cost optimization recommendations are actionable."
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Conduct End-to-End Production Validation",
+        "description": "Perform comprehensive testing of the complete n8n to SageMaker to webhook workflow in production environment",
+        "details": "1) Set up n8n integration with production SageMaker endpoint, 2) Test complete workflow: n8n POST request → /invocations → process_job() → Supabase query → LLM inference → webhook callback, 3) Validate latency requirements (<120s), 4) Test error handling and retry mechanisms, 5) Verify webhook delivery and n8n response handling, 6) Test with various job types and edge cases, 7) Monitor resource utilization and performance metrics",
+        "testStrategy": "Interactive testing with developer to confirm end-to-end functionality. Document latency measurements and provide instructions for ongoing monitoring. Verify webhook callbacks are received successfully by n8n.",
+        "priority": "high",
+        "dependencies": [
+          8
+        ],
+        "status": "pending",
+        "subtasks": [
+          {
+            "id": 1,
+            "title": "n8n Integration Setup and Configuration",
+            "description": "Configure n8n integration with production SageMaker endpoint including authentication, endpoint URLs, and workflow setup",
+            "dependencies": [],
+            "details": "Set up n8n production instance with proper authentication credentials, configure SageMaker endpoint URL and authentication headers, establish webhook callback URLs, and verify n8n can successfully communicate with the production SageMaker endpoint",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 2,
+            "title": "Complete Workflow Testing and Validation",
+            "description": "Execute comprehensive end-to-end testing of the complete n8n to SageMaker to webhook workflow",
+            "dependencies": [
+              "9.1"
+            ],
+            "details": "Test complete workflow: n8n POST request → /invocations → process_job() → Supabase query → LLM inference → webhook callback. Validate data flow integrity, response formats, and successful completion of various job types and edge cases",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 3,
+            "title": "Performance and Latency Requirement Verification",
+            "description": "Validate that the end-to-end workflow meets the <120s latency requirement under various load conditions",
+            "dependencies": [
+              "9.2"
+            ],
+            "details": "Conduct performance testing with different job types and payload sizes, measure end-to-end latency from n8n request to webhook callback, monitor resource utilization, and verify consistent performance under expected production load",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 4,
+            "title": "Error Handling and Resilience Testing",
+            "description": "Test error handling mechanisms, retry logic, and system resilience under failure conditions",
+            "dependencies": [
+              "9.2"
+            ],
+            "details": "Test various failure scenarios including network timeouts, SageMaker endpoint failures, webhook delivery failures, invalid payloads, and authentication errors. Verify proper error responses, retry mechanisms, and graceful degradation",
+            "status": "pending",
+            "testStrategy": ""
+          },
+          {
+            "id": 5,
+            "title": "Production Monitoring and Documentation",
+            "description": "Set up production monitoring, create operational documentation, and establish ongoing maintenance procedures",
+            "dependencies": [
+              "9.3",
+              "9.4"
+            ],
+            "details": "Configure CloudWatch dashboards and alarms for production monitoring, document operational procedures for troubleshooting and maintenance, create runbooks for common issues, and establish performance baseline metrics for ongoing monitoring",
+            "status": "pending",
+            "testStrategy": ""
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Create Production Documentation and Handover",
+        "description": "Generate comprehensive documentation for production deployment, monitoring, and maintenance procedures",
+        "details": "1) Create deployment runbook with step-by-step procedures, 2) Document monitoring and alerting setup, 3) Create troubleshooting guide for common issues, 4) Document API endpoints and authentication requirements, 5) Create maintenance procedures for updates and scaling, 6) Document cost optimization recommendations, 7) Create incident response procedures, 8) Provide training materials for operations team",
+        "testStrategy": "Review documentation with stakeholders and validate all procedures work as documented. Test documentation by having another developer follow deployment procedures.",
+        "priority": "medium",
+        "dependencies": [
+          9
+        ],
+        "status": "pending",
+        "subtasks": []
+      }
+    ],
+    "metadata": {
+      "created": "2025-08-02T23:50:35.741Z",
+      "updated": "2025-08-03T16:54:45.838Z",
+      "description": "Tasks for master context"
+    }
+  }
+}

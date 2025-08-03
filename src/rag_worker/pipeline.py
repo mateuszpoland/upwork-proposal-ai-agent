@@ -21,6 +21,8 @@ from .prompts import (
 import os
 import logging
 from typing import List, Dict, Optional
+import json
+from .util import timed
 
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 COHERE_API_KEY = os.getenv('COHERE_API_KEY')
@@ -38,7 +40,7 @@ OPENAI_MODEL = os.getenv('OPENAI_MODEL') or 'gpt-4.1-mini'
 ##### VectorStoreIndex and connection setup #####
 
 from llama_index.vector_stores.supabase import SupabaseVectorStore
-from llama_index.core import StorageContext, VectorStoreIndex
+from llama_index.core import VectorStoreIndex
 from llama_index.embeddings.openai import OpenAIEmbedding
 
 class JobDataAugmenter:
@@ -133,6 +135,7 @@ class RelevantExperienceRetriever(BaseRetriever):
     [output.append(node) for k, node in nodes_with_scores.items()]
     return output
 
+@timed
 def query_rag_pipeline(job_request: JobApplicationRequestModel) -> dict:
     """Perform RAG inference"""
     try:
@@ -173,23 +176,38 @@ def _get_vector_store_index() -> VectorStoreIndex:
 
 def _retrieve_and_rerank_nodes(embed_model: OpenAIEmbedding, index: VectorStoreIndex, input: QueryAugmentationResult) -> List[NodeWithScore]:
   """Retrieve nodes from vector index."""
-  cohere_reranker = CohereRerank(api_key=COHERE_API_KEY, top_n=2)
+  cohere_reranker = CohereRerank(api_key=COHERE_API_KEY, top_n=3)
   retriever = RelevantExperienceRetriever(
       vector_store=index.vector_store,
       embed_model=embed_model,
       similarity_top_k=3
   )
 
-  reranked_nodes: List[NodeWithScore] = []
+  seen_texts = set()
+  retrieved_deduplicated_nodes: List[NodeWithScore] = []
+
   for question in input.retrieval_queries:
     retrieved_nodes = retriever._retrieve(question)
-    reranked_nodes.extend(cohere_reranker.postprocess_nodes(retrieved_nodes, query_str=question))
+    for node in retrieved_nodes:
+       normalized_text = node.text.strip()
+       if normalized_text not in seen_texts:
+          seen_texts.add(normalized_text)
+          retrieved_deduplicated_nodes.append(node) 
+  
+  
+  reranked_nodes = cohere_reranker.postprocess_nodes(retrieved_deduplicated_nodes, query_str=" ".join(input.retrieval_queries))
   
   return reranked_nodes
 
 
 def _generate_response(nodes: List[NodeWithScore], augmented_query: QueryAugmentationResult) -> dict:
   """Generate response for proposal building agent."""
+  import re
+  def normalize_text(text: str) -> str:
+     text = text.strip()
+     text = re.sub(r'\s+', ' ', text)
+     return text
+  
   response = {
       "job_description": augmented_query.job_summary,
       "business_problem": augmented_query.job_business_problem,
@@ -197,7 +215,7 @@ def _generate_response(nodes: List[NodeWithScore], augmented_query: QueryAugment
       "skillset_required": augmented_query.skillset_required,
       "applicant_questions": augmented_query.applicant_questions,
       "additional_agent_instruction": augmented_query.additional_agent_instruction,
-      "retrieval_nodes": [node.text for node in nodes],
+      "retrieval_nodes": [normalize_text(node.text) for node in nodes],
   }
 
   return response
@@ -205,10 +223,15 @@ def _generate_response(nodes: List[NodeWithScore], augmented_query: QueryAugment
 SUPABASE_URL = os.getenv('SUPABASE_URL')
 SUPABASE_KEY = os.getenv('SUPABASE_KEY')
 
-def _update_db(job_uuid: str, result: str) -> None:
+def _update_db(job_uuid: str, response: dict) -> None:
+   try:
+      json.dumps(response, ensure_ascii=False)  # UTF-8 safe
+   except (TypeError, ValueError) as e:
+      raise Exception(f"❌ Failed to serialize JSON: {e}")
+   
    supabase_connection = create_client(SUPABASE_URL, SUPABASE_KEY)
    response =supabase_connection.table('upwork_jobs_data').update({
-      "processed": result,
+      "processed": response,
       "stage": "PROCESSED"
    }).eq('job_uuid', job_uuid).execute()
 
