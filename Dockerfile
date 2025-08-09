@@ -18,6 +18,8 @@ RUN pip install --upgrade pip \
 
 COPY ./src /app/src
 
+RUN chmod +x /app/src/rag_worker/serve.sh
+
 EXPOSE 8080
 
-CMD ["uvicorn", "src.rag_worker.inference:app", "--host", "0.0.0.0", "--port", "8080"]
+ENTRYPOINT [ "/app/src/rag_worker/serve.sh" ]

@@ -1,9 +1,7 @@
 services:
 
   worker:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: "${ECR_REPO_BASE_URL}/upwork-rag-worker-${APP_ENV}:${APP_RELEASE:-latest}"
     container_name: worker
     env_file:
       - .env
@@ -12,4 +10,4 @@ services:
       - "5678:5678"
     volumes:
       - ./src:/app/src:rw
-    command: ["uvicorn", "src.rag_worker.inference:app", "--host", "0.0.0.0", "--port", "8080"]
+    command: serve

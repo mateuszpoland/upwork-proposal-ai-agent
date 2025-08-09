@@ -1616,9 +1616,6 @@ API
 ## AI Prompt Engineer / OpenAI Fine-Tuning Specialist for Legal Document Generation
 
 ### Summary
-Title:
-AI Prompt Engineer / OpenAI Fine-Tuning Specialist for Legal Document Generation (UK TO BEGIN WITH)
-
 Description:
 We're seeking an experienced AI prompt engineer or OpenAI fine-tuning expert to help enhance the quality and legal robustness of documents generated through the OpenAI API.
 

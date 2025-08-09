@@ -1,14 +1,15 @@
 #this file is required by SageMaker: https://docs.aws.amazon.com/sagemaker/latest/dg/your-algorithms-inference-code.html
 import os
 import threading
-from fastapi import FastAPI, Request, Response, Depends, HTTPException, status
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from fastapi import FastAPI, Request, Response, HTTPException
+from fastapi.security import HTTPBasic
 from .payloads import JobApplicationRequestModel, JobAcceptedResponse
 from .pipeline import query_rag_pipeline
 from .util import timed
+from ..config import config
 
 ### debugging
-if os.getenv("DEBUGPY_ENABLED", "false").lower() == "true":
+if config.get_bool("DEBUGPY_ENABLED", False):
     import debugpy
     debugpy.listen(("0.0.0.0", 5678))
     print("✅ debugpy is listening on port 5678 — waiting for debugger to attach...")
@@ -17,32 +18,29 @@ app = FastAPI(
     title="Upwork JOB agent inference API",
     description="Retrieves the experience and sales points related to job description that can be used to construct a job application.",
     version="1.0.0")
+
+from .endpoint_control import router as control_router
+app.include_router(control_router)
+
 security = HTTPBasic()
 
-profiling_enabled = os.getenv("ENABLE_PROFILING", "false").lower()
-if profiling_enabled == "true":
+if config.get_bool("ENABLE_PROFILING", False):
     from .profiler import PyInstrumentMiddleWare
     app.add_middleware(PyInstrumentMiddleWare)
     print("✅ fastapi-profiler middleware enabled")
 
-BASIC_AUTH_USER = os.getenv('BASIC_AUTH_USER')
-BASIC_AUTH_PASS = os.getenv('BASIC_AUTH_PASS')
-WEBHOOK_URL = os.getenv('WEBHOOK_URL')
+BASIC_AUTH_USER = config.get('BASIC_AUTH_USER')
+BASIC_AUTH_PASS = config.get('BASIC_AUTH_PASS')
+WEBHOOK_URL = config.get('WEBHOOK_URL')
 
-def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
-    username = credentials.username == BASIC_AUTH_USER
-    password = credentials.password == BASIC_AUTH_PASS
-    if not (username and password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid credentials",
-        )
-    
-    return credentials.username
+@app.get("/ping", status_code=200)
+def health_check():
+    return {"status": "ok"}
 
  # === FastAPI route (SageMaker expects this exact path) ===
 @app.post("/invocations", response_model=JobAcceptedResponse, status_code=202)
 async def handle_invocation(request: Request):
+    print("🚀 Starting RAG pipeline")
     try:
         payload = await request.json()
         job = JobApplicationRequestModel(**payload)
@@ -81,7 +79,7 @@ def _send_webhook(job_uuid: str, result: dict) -> Response:
         payload = {
             "job_id": job_uuid,
             "status": "PROCESSED",
-            "result_url": f"{os.environ.get('SUPABASE_URL')}/rest/v1/upwork_jobs?job_uuid=eq.{job_uuid}",
+            "result_url": f"{config.get('SUPABASE_URL')}/rest/v1/upwork_jobs?job_uuid=eq.{job_uuid}",
         }
 
         headers = {

@@ -18,24 +18,20 @@ from .prompts import (
    BUSINESS_DESCRIPTION_PROMPT,
    CREATE_QUERY_SET_PROMPT
 )
-import os
 import logging
 from typing import List, Dict, Optional
 import json
 from .util import timed
+from ..config import config
 
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-COHERE_API_KEY = os.getenv('COHERE_API_KEY')
-
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL")
-WEBHOOK_USER = os.environ.get("WEBHOOK_USER")
-WEBHOOK_PASS = os.environ.get("WEBHOOK_PASS")
-
-WEBHOOK_URL = os.getenv('WEBHOOK_URL')
-SUPABASE_PASS = os.getenv('SUPABASE_PASSWORD')
-
-OPENAI_EMBEDDING_MODEL = os.getenv('OPENAI_EMBEDDING_MODEL') or 'text-embedding-3-small'
-OPENAI_MODEL = os.getenv('OPENAI_MODEL') or 'gpt-4.1-mini'
+OPENAI_API_KEY = config.get('OPENAI_API_KEY')
+COHERE_API_KEY = config.get('COHERE_API_KEY')
+WEBHOOK_URL = config.get("WEBHOOK_URL")
+WEBHOOK_USER = config.get("WEBHOOK_USER")
+WEBHOOK_PASS = config.get("WEBHOOK_PASS")
+SUPABASE_PASS = config.get('SUPABASE_PASSWORD')
+OPENAI_EMBEDDING_MODEL = config.get('OPENAI_EMBEDDING_MODEL', 'text-embedding-3-small')
+OPENAI_MODEL = config.get('OPENAI_MODEL', 'gpt-4.1-mini')
 
 ##### VectorStoreIndex and connection setup #####
 
@@ -45,35 +41,34 @@ from llama_index.embeddings.openai import OpenAIEmbedding
 
 class JobDataAugmenter:
     def __init__(self, llm=None) -> None:
-        self._llm = llm or OpenAI(model="gpt-4.1-mini")
+        self._llm = llm or OpenAI(model=OPENAI_MODEL, api_key=OPENAI_API_KEY)
 
     def augment(self, req: JobApplicationRequestModel) -> QueryAugmentationResult:
         summ_input = dict(
             job_title=req.job_title,
             job_description=req.job_description,
-            skills_keywords=", ".join(req.skills_keywords),
         )
         summary = self._generate_summary(summ_input).raw
         business = self._generate_business_intent_desc(req.job_description).raw
         qset    = self._generate_query_set(summary, business.business_outcome, business.problem).raw
+        skills_required = None
+        if req.skills_keywords is not None:
+           skills_required = ", ".join(req.skills_keywords)
 
         return QueryAugmentationResult(
             job_summary=summary.summary,
             job_business_problem=business.problem,
             job_business_outcome=business.business_outcome,
-            skillset_required=summary.skills_for_the_job,
+            skillset_required=skills_required,
             applicant_questions=req.applicant_questions,
             retrieval_queries=qset.vector_index_queries,
             additional_agent_instruction=req.additional_agent_instruction,
         )
 
     def _generate_summary(self, data: dict) -> JobSummary:
-      try:
-        sllm = self._llm.as_structured_llm(JobSummary, strict=True)
-        return sllm.complete(SUMMARY_PROMPT.format(**data))
-      except AttributeError as e:
-        print(f"Invalid JSON returned from LLM")
-        raise e
+      sllm = self._llm.as_structured_llm(JobSummary)
+      return sllm.complete(SUMMARY_PROMPT.format(**data))
+  
 
     def _generate_business_intent_desc(self, jd: str) -> JobBusinessIntent:
         sllm = self._llm.as_structured_llm(JobBusinessIntent)
@@ -86,7 +81,6 @@ class JobDataAugmenter:
                 summary=summary.summary,
                 business_outcome=business_outcome,
                 business_problem=business_problem,
-                skillset_required=summary.skills_for_the_job,
             )
     )
 
@@ -140,9 +134,9 @@ def query_rag_pipeline(job_request: JobApplicationRequestModel) -> dict:
     """Perform RAG inference"""
     try:
         index = _get_vector_store_index()
-        augmenter = JobDataAugmenter(OpenAI(model=OPENAI_MODEL))
+        augmenter = JobDataAugmenter(OpenAI(model=OPENAI_MODEL, api_key=OPENAI_API_KEY))
         augmented_query = augmenter.augment(job_request)
-        embed_model = OpenAIEmbedding(model=OPENAI_EMBEDDING_MODEL)
+        embed_model = OpenAIEmbedding(model=OPENAI_EMBEDDING_MODEL, api_key=OPENAI_API_KEY)
         nodes_with_scores = _retrieve_and_rerank_nodes(embed_model, index, augmented_query)
         nodes_keyword_boosted = KeywordBoost()._postprocess_nodes(nodes_with_scores, augmented_query.job_summary)
 
@@ -155,7 +149,6 @@ def query_rag_pipeline(job_request: JobApplicationRequestModel) -> dict:
        raise e
 
 def _get_vector_store_index() -> VectorStoreIndex:
-   SUPABASE_PASS = os.environ.get("SUPABASE_PASSWORD")
    postgres_url = f'postgresql://postgres.lvhumxpipledgimerzxd:{SUPABASE_PASS}@aws-0-eu-west-1.pooler.supabase.com:5432/postgres'
 
    vector_store = SupabaseVectorStore(
@@ -166,7 +159,7 @@ def _get_vector_store_index() -> VectorStoreIndex:
    
    index = VectorStoreIndex.from_vector_store(
     vector_store=vector_store,
-    embed_model=OpenAIEmbedding(model="text-embedding-3-small")
+    embed_model=OpenAIEmbedding(model=OPENAI_EMBEDDING_MODEL, api_key=OPENAI_API_KEY)
    )
 
    logging.info("Index loaded from Supabase storage.")
@@ -220,8 +213,8 @@ def _generate_response(nodes: List[NodeWithScore], augmented_query: QueryAugment
 
   return response
 
-SUPABASE_URL = os.getenv('SUPABASE_URL')
-SUPABASE_KEY = os.getenv('SUPABASE_KEY')
+SUPABASE_URL = config.get('SUPABASE_URL')
+SUPABASE_KEY = config.get('SUPABASE_KEY')
 
 def _update_db(job_uuid: str, response: dict) -> None:
    try:

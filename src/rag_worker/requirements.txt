@@ -17,7 +17,7 @@ debugpy
 pyinstrument
 arize-phoenix==10.14.0
 arize-phoenix-otel
-opentelemetry
+opentelemetry-api
 opentelemetry-sdk
 opentelemetry-exporter-otlp
 openinference-instrumentation-openai
