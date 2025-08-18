@@ -55,27 +55,26 @@ APP_RELEASE=dev docker-compose up
   1. Get ECR Registry URI
 
   First, get the ECR repository URI from your deployed stack:
+```bash
   aws ecr describe-repositories --repository-names rag-worker --profile awsomedevs-prd-mateusz --region eu-central-1
-
+```
   2. Login to ECR
-
+```bash
   aws ecr get-login-password --region eu-central-1 \
   --profile awsomedevs-prd-mateusz \
   | docker login --username AWS --password-stdin 539247473920.dkr.ecr.eu-central-1.amazonaws.com
+```
 
   3. Tag for ECR
+```bash
   docker tag upwork-rag-worker-prod:v1.0.0 539247473920.dkr.ecr.eu-central-1.amazonaws.com/upwork-rag-worker-prod:v1.0.0
   docker tag upwork-rag-worker-prod:v1.0.0 539247473920.dkr.ecr.eu-central-1.amazonaws.com/upwork-rag-worker-prod:latest
-
+```
   4. Push to ECR
+```bash
   docker push 539247473920.dkr.ecr.eu-central-1.amazonaws.com/upwork-rag-worker-prod:v1.0.0
   docker push 539247473920.dkr.ecr.eu-central-1.amazonaws.com/upwork-rag-worker-prod:latest
-
-
-  If you prefer manual control:
-  # Build locally first
-  ./scripts/build-image.sh --version 1.0.0 --env prod
-
+```
 
 ## 🧪 Test job ingestion
 
