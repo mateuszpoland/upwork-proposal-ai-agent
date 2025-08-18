@@ -13,7 +13,7 @@ from .models import (
 )
 from .node_postprocessors import KeywordBoost
 from llama_index.postprocessor.cohere_rerank import CohereRerank
-from .prompts import (
+from .prompts.prompts import (
    SUMMARY_PROMPT,
    BUSINESS_DESCRIPTION_PROMPT,
    CREATE_QUERY_SET_PROMPT
